@@ -21,6 +21,8 @@ load_dotenv()
 os.environ.setdefault("OPENAI_API_KEY", "not-used-routing-elsewhere")
 
 # ── 1. OTel bootstrap — MUST run before importing orchestrator ───────────────
+# (orchestrator.py calls wd_otel.tracer()/meter() at module level, which
+# raise WdOtelConfigError unless init() has been called first.)
 import wd_otel
 
 wd_otel.init("otel_agent_v2/wd-otel-orchestrator.yaml")
@@ -51,4 +53,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(_main(sys.argv[1]))
     finally:
+        # NOTE: spans in-flight at Ctrl+C are best-effort; force_flush may not complete.
         wd_otel.shutdown()
