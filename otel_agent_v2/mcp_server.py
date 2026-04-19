@@ -62,6 +62,9 @@ step_retries = meter.create_counter(
     unit="1",
     description="Total step retry attempts per node",
 )
+# NOTE: not incremented here — retry logic was removed for clarity in this demo.
+# The metric is declared to match the 4-metric contract; wire up increments when
+# retry logic is restored or moved to a wd-otel-langgraph helper.
 
 # ── 3. Imports that rely on OTel being live ──────────────────────────────────
 from fastmcp import Context, FastMCP
