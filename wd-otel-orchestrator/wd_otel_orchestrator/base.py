@@ -22,6 +22,91 @@ logger = logging.getLogger("wd_otel_orchestrator.base")
 # ---------------------------------------------------------------------------
 # Module-level state for httpx monkey-patch
 # ---------------------------------------------------------------------------
+#
+# KNOWN CONCURRENCY RACE — read before modifying this block
+# ----------------------------------------------------------
+# `_mcp_trace_context` is a plain module-level variable that ferries the OTel
+# context set in `execute()` into the httpx monkey-patch.  Under concurrent
+# FastAPI requests this creates a race:
+#
+#   Request A writes context_A → _mcp_trace_context
+#   Request B writes context_B → _mcp_trace_context   (A's write is lost)
+#   A's tool call injects context_B into its traceparent header
+#   → A's spans appear under B's trace (silent data corruption)
+#
+# WHY A SIMPLE contextvar.ContextVar DOES NOT FIX THIS
+# ------------------------------------------------------
+# The naive fix would be:
+#
+#   from contextvars import ContextVar
+#   _mcp_trace_context: ContextVar = ContextVar("_mcp_trace_context", default=None)
+#   # in execute(): _mcp_trace_context.set(otel_context.get_current())
+#   # in _send_with_trace(): otel_inject(carrier, context=_mcp_trace_context.get())
+#
+# `asyncio.create_task` copies the caller's ContextVar snapshot at creation
+# time, so a ContextVar set by `execute()` IS visible to the direct
+# `request_task` spawned by `MCPServerStreamableHttp._call_tool_with_isolated_retry`.
+#
+# However, the actual httpx.AsyncClient.send call does NOT run in that task.
+# The execution path for MCPServerStreamableHttp (openai-agents 0.14, mcp 1.26)
+# is:
+#
+#   execute() [caller's asyncio Task, has ContextVar value]
+#     └─ Runner.run()
+#          └─ MCPServerStreamableHttp.call_tool()
+#               └─ _call_tool_with_isolated_retry()
+#                    └─ asyncio.create_task(_call_tool_with_shared_session())
+#                         [new task — inherits ContextVar from caller ✓]
+#                         └─ session.call_tool()  →  writes to write_stream
+#
+#   Meanwhile, a SEPARATE long-running `post_writer` task (anyio TaskGroup)
+#   was started at MCPServer.__aenter__ / connect() time — its ContextVar
+#   snapshot is frozen at that early moment (before any execute() call):
+#
+#   post_writer [TaskGroup task, context captured at connect() time — stale]
+#     └─ reads message from write_stream
+#          └─ tg.start_soon(handle_request_async)   ← new anyio task
+#               [inherits post_writer's STALE context, not execute()'s]
+#               └─ _handle_post_request()
+#                    └─ ctx.client.stream("POST", ...)
+#                         └─ httpx.AsyncClient.send   ← monkey-patched here
+#
+# `_send_with_trace` runs inside the `handle_request_async` sub-task, which
+# inherits context from `post_writer`, NOT from `execute()`.  Any ContextVar
+# written by `execute()` is invisible here — so `_mcp_trace_context.get()`
+# would return the default (None) instead of the current span context.
+#
+# The module-level variable works precisely BECAUSE it is not scoped to any
+# task — it is a shared mutable cell readable from any context.  The race
+# described above is the price paid for that visibility.
+#
+# CORRECT FIX (requires more invasive work)
+# ------------------------------------------
+# Options (in order of preference):
+#
+#   1. Supply a per-request httpx.Auth or httpx.EventHook that reads the
+#      trace context from a request-scoped attribute injected before the
+#      httpx call.  This requires changes to how MCPServerStreamableHttp
+#      is constructed (pass a custom httpx_client_factory that attaches the
+#      hook) and threading the trace context through as a request-local
+#      header or a request extension.
+#
+#   2. Use `httpx.AsyncClient` event hooks (`send` event) seeded with a
+#      per-request ContextVar that is set BEFORE the write_stream message
+#      is enqueued — i.e., patch the ClientSession.call_tool coroutine
+#      rather than httpx.AsyncClient.send, so the injection happens in the
+#      `request_task` (which DOES have the right context).
+#
+#   3. Build a per-request MCPServerStreamableHttp instance (one per
+#      execute() call) so that connect() is called inside execute(), where
+#      the ContextVar value is already set.  This avoids the stale-context
+#      problem at the cost of a new HTTP connection per request.
+#
+# Until one of the above is implemented, the module-level variable stays and
+# the race remains.  Single-request usage (cli.py) is unaffected.
+# Concurrent-request usage (api.py) is affected: under concurrent load,
+# traceparent headers may carry a different request's trace ID.
+# ---------------------------------------------------------------------------
 
 _mcp_trace_context = None
 _httpx_patched = False
@@ -32,6 +117,12 @@ def _ensure_httpx_patch() -> None:
 
     Uses module-level _mcp_trace_context so MCP calls in background tasks
     always pick up the current trace context. Only patches once.
+
+    NOTE: This approach has a known race under concurrent requests — see the
+    comment block above for a full explanation and candidate fixes. A simple
+    ``contextvars.ContextVar`` replacement does NOT resolve the race because
+    the actual httpx.send runs in an anyio sub-task that captured the OTel
+    context at MCP server connect() time, not at execute() time.
     """
     global _httpx_patched
     if _httpx_patched:
