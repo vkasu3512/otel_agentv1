@@ -1,0 +1,26 @@
+# WD-OTel SDK packages (installed from local path with `pip install -e`)
+wd-otel-core
+wd-otel-mcp
+wd-otel-orchestrator
+
+# OpenAI Agents SDK (supports any OpenAI-compatible endpoint: Groq, Bedrock proxy, etc.)
+openai-agents>=0.0.15
+
+# Auto-instrumentation for Agents SDK — produces `generation` spans around LLM calls
+openinference-instrumentation-openai-agents>=0.1.0
+
+# MCP tool server transport
+fastmcp>=2.0.0
+
+# LangGraph for the multi-step solver
+langgraph>=0.2.0
+
+# FastAPI transport (api.py) and KPI proxy (kpi_proxy.py)
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# HTTP client used by MCP client + AsyncOpenAI + kpi_proxy
+httpx>=0.27.0
+
+# .env loading
+python-dotenv>=1.0.0

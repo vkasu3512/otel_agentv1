@@ -1,0 +1,18 @@
+# wd-otel config for the orchestrator FastAPI / CLI process.
+# Prometheus scrapes 8000; traces go to Tempo on 4317; logs go to Loki.
+service:
+  name: "otel-agent-v2-orchestrator"
+  version: "1.0.0"
+  env: "local"
+
+traces:
+  endpoint: "localhost:4317"
+  protocol: "grpc"
+  filter_libraries:
+    - "fastmcp"
+
+metrics:
+  prometheus_port: 8000
+
+logs:
+  loki_url: "http://localhost:3100/loki/api/v1/push"
