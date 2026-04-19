@@ -74,6 +74,10 @@ async def health() -> dict:
     return {"status": "ok", "metrics": "http://localhost:8000/metrics"}
 
 
+# NOTE: Under concurrent requests, traceparent headers for MCP calls may carry
+# a different request's trace ID (known race in TracedOrchestrator._mcp_trace_context).
+# See wd-otel-orchestrator/wd_otel_orchestrator/base.py for details and candidate fixes.
+# This endpoint is safe for sequential / demo use.
 @app.post("/run", response_model=AnswerResponse)
 async def run(request: QuestionRequest) -> AnswerResponse:
     if not request.question.strip():

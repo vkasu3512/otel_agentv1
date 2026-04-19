@@ -105,3 +105,15 @@ No OTel changes needed — spans and metrics are provider-agnostic.
 | `mcp.duration_p95` | `@traced_tool` finally block (auto) |
 | `mcp.timeouts_rate` | `@traced_tool` on thread-join timeout (auto) |
 | `langgraph.*` (×4) | `mcp_server.py` — **still custom**, candidate for future helper |
+
+## Known limitations
+
+- **Concurrent requests on `POST /run` can cross-contaminate trace IDs.**
+  `TracedOrchestrator` stores the active OTel context in a module-level
+  variable so the httpx monkey-patch can read it from an MCP background
+  task. If Request B overwrites that variable before Request A's MCP call
+  fires, A's tool spans appear under B's trace.
+
+  Safe for the demo / sequential CLI flow. Not safe for concurrent
+  production traffic. Full analysis and candidate fixes live in
+  `wd-otel-orchestrator/wd_otel_orchestrator/base.py`.
