@@ -1,0 +1,61 @@
+alloy:
+  configMap:
+    create: true
+    content: |
+      // ── OTLP receiver ──────────────────────────────────────────────────
+      otelcol.receiver.otlp "default" {
+        grpc { endpoint = "0.0.0.0:4317" }
+        http { endpoint = "0.0.0.0:4318" }
+        output {
+          traces  = [otelcol.exporter.otlp.tempo.input]
+          metrics = [otelcol.exporter.prometheus.default.input]
+          logs    = [otelcol.exporter.loki.default.input]
+        }
+      }
+
+      // ── Trace → Tempo ───────────────────────────────────────────────────
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo.monitoring.svc.cluster.local:4317"
+          tls { insecure = true }
+        }
+      }
+
+      // ── Metrics → Prometheus ────────────────────────────────────────────
+      otelcol.exporter.prometheus "default" {
+        forward_to = [prometheus.remote_write.default.receiver]
+      }
+      prometheus.remote_write "default" {
+        endpoint {
+          url = "http://kube-prom-stack-kube-prome-prometheus.monitoring.svc:9090/api/v1/write"
+        }
+      }
+
+      // ── Logs → Loki ─────────────────────────────────────────────────────
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.default.receiver]
+      }
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
+        }
+      }
+
+      // ── Kubernetes pod log scraping ──────────────────────────────────────
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+      loki.source.kubernetes "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [loki.write.default.receiver]
+      }
+
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP

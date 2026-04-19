@@ -1,0 +1,17 @@
+# WD-OTel SDK config — production
+service:
+  name: "my-mcp-server"
+  version: "1.0.0"
+  env: "production"
+
+traces:
+  endpoint: "alloy.monitoring.svc.cluster.local:4317"
+  protocol: "grpc"
+  filter_libraries:
+    - "fastmcp"
+
+metrics:
+  prometheus_port: 8001
+
+logs:
+  loki_url: "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"

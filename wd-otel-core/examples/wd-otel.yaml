@@ -1,0 +1,17 @@
+# WD-OTel SDK config — local development
+service:
+  name: "my-mcp-server"
+  version: "1.0.0"
+  env: "local"
+
+traces:
+  endpoint: "localhost:4317"
+  protocol: "grpc"
+  filter_libraries:
+    - "fastmcp"
+
+metrics:
+  prometheus_port: 8001
+
+logs:
+  loki_url: "http://localhost:3100/loki/api/v1/push"

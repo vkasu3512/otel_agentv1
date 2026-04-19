@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show *)",
+      "Bash(python -c \"import wd_otel; print\\('wd_otel imported OK'\\)\")",
+      "Bash(python -c \"from fastmcp import Context; print\\('fastmcp.Context imported OK'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -m pytest tests/test_context.py -v)",
+      "Bash(python -m pytest tests/test_decorator.py -v)",
+      "Bash(python -c \"from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter; print\\('OK'\\)\")",
+      "Bash(python -c \"from opentelemetry.sdk.trace.export import InMemorySpanExporter; print\\('export OK'\\)\")",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(pytest tests/ -v --tb=short)",
+      "Bash(python -c \"from opentelemetry.sdk.trace.export.in_memory import InMemorySpanExporter; print\\('OK'\\)\")",
+      "Bash(python *)"
+    ]
+  }
+}

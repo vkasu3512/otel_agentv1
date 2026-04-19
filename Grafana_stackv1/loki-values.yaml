@@ -1,0 +1,58 @@
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+
+  limits_config:
+    retention_period: 168h  # 7 days
+
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+# Deployment mode (single binary for local)
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 5Gi
+
+# Disable distributed components (important for local)
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+backend:
+  replicas: 0
+
+# Disable cache (avoids Pending pods issue)
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+# Disable monitoring (reduce resource usage)
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+  serviceMonitor:
+    enabled: false

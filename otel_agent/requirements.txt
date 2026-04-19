@@ -1,0 +1,21 @@
+# OpenAI Agents SDK
+openai-agents>=0.0.15
+
+# OpenTelemetry core API + SDK
+opentelemetry-api>=1.24.0
+opentelemetry-sdk>=1.24.0
+
+# OTLP gRPC exporter — covers both OTLPSpanExporter and OTLPMetricExporter
+opentelemetry-exporter-otlp-proto-grpc>=1.24.0
+
+# Logging instrumentation — injects trace_id/span_id into Python log records
+opentelemetry-instrumentation-logging>=0.45b0
+
+# Auto-instrumentation for OpenAI Agents SDK (used in agent_auto.py only)
+openinference-instrumentation-openai-agents>=0.1.0
+
+# MCP HTTP transport (FastMCP tool servers)
+fastmcp>=2.0.0
+
+# Async HTTP client (required by AsyncOpenAI and MCP client)
+httpx>=0.27.0

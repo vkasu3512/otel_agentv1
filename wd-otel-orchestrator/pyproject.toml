@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wd-otel-orchestrator"
+version = "0.1.0"
+description = "WD OpenTelemetry SDK — orchestrator base class"
+requires-python = ">=3.10"
+dependencies = [
+    "wd-otel-core>=0.1.0",
+    "openai-agents>=0.0.15",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23.0"]

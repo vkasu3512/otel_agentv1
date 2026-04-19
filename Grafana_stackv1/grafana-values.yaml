@@ -1,0 +1,68 @@
+adminPassword: "grafana"   # change for production!
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://kube-prom-stack-kube-prome-prometheus.monitoring.svc:9090
+        isDefault: true
+        access: proxy
+
+      - name: Loki
+        type: loki
+        url: http://loki.monitoring.svc:3100
+        access: proxy
+
+      - name: Tempo
+        type: tempo
+        url: http://tempo.monitoring.svc:3200
+        access: proxy
+        jsonData:
+          httpMethod: GET
+          serviceMap:
+            datasourceUid: Prometheus
+          tracesToLogsV2:
+            datasourceUid: Loki
+            spanStartTimeShift: "-1h"
+            spanEndTimeShift: "1h"
+            tags: [{ key: "service.name", value: "app" }]
+          tracesToMetrics:
+            datasourceUid: Prometheus
+          lokiSearch:
+            datasourceUid: Loki
+
+      - name: Alertmanager
+        type: alertmanager
+        url: http://kube-prom-stack-kube-prome-alertmanager.monitoring.svc:9093
+        access: proxy
+        jsonData:
+          handleGrafanaManagedAlerts: false
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+dashboards:
+  default:
+    kubernetes-cluster:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    node-exporter:
+      gnetId: 1860
+      revision: 36
+      datasource: Prometheus

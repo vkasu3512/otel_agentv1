@@ -1,0 +1,29 @@
+tempo:
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+  traces:
+    otlp:
+      grpc:
+        enabled: true
+      http:
+        enabled: true
+    jaeger:
+      grpcThriftBinary:
+        enabled: true
+      thriftHttp:
+        enabled: true
+    zipkin:
+      enabled: true
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+serviceMonitor:
+  enabled: true
+
+tempoQuery:
+  enabled: false    # no need for Jaeger UI, use Grafana instead

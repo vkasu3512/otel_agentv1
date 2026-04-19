@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wd-otel-mcp"
+version = "0.1.0"
+description = "WD OpenTelemetry SDK — MCP tool decorator"
+requires-python = ">=3.10"
+dependencies = [
+    "wd-otel-core>=0.1.0",
+    "fastmcp>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
