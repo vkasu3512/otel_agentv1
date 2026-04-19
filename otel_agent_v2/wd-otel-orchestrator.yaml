@@ -8,8 +8,6 @@ service:
 traces:
   endpoint: "localhost:4317"
   protocol: "grpc"
-  filter_libraries:
-    - "fastmcp"
 
 metrics:
   prometheus_port: 8000
