@@ -32,11 +32,11 @@ Examples
 --------
     # Instant query
     curl -G http://localhost:8900/query \\
-      --data-urlencode 'q=sum(orchestrator_active_workers)'
+      --data-urlencode 'q=sum(wd_otel_workers_active)'
 
     # Range query (time series)
     curl -G http://localhost:8900/query_range \\
-      --data-urlencode 'q=rate(mcp_tool_invocations_total[5m])' \\
+      --data-urlencode 'q=rate(wd_otel_tool_invocations_total[5m])' \\
       -d minutes=60 -d step=30s
 
     # Batch all predefined KPIs (dashboard poll)
