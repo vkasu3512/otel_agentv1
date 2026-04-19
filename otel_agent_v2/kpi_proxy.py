@@ -65,32 +65,33 @@ QUERIES: dict[str, dict[str, str]] = {
     "orchestrator.active_workers": {
         "area": "orchestrator",
         "title": "Concurrent active workers",
-        "query": "sum by (worker_type) (orchestrator_active_workers)",
+        "query": "sum by (worker_type) (wd_otel_workers_active)",
     },
     "orchestrator.state_transitions_rate": {
         "area": "orchestrator",
-        "title": "State transitions /min by from→to",
+        "title": "State transitions /min by worker→to",
         "query": "sum by (worker_type, from_state, to_state) "
-                 "(rate(orchestrator_state_transitions_total[5m])) * 60",
+                 "(rate(wd_otel_state_transitions_total[5m])) * 60",
     },
     "orchestrator.errors_total": {
         "area": "orchestrator",
         "title": "Orchestration errors (cumulative)",
-        "query": "sum by (worker_type, error_type) (orchestrator_errors_total)",
+        "query": "sum by (worker_type, error_type) "
+                 "(wd_otel_orchestration_errors_total)",
     },
     "orchestrator.sync_failures_1h": {
         "area": "orchestrator",
         "title": "Status sync failures (last 1h)",
         "query": "sum by (worker_type, failure_type) "
-                 "(increase(orchestrator_sync_failures_total[1h]))",
+                 "(increase(wd_otel_sync_failures_total[1h]))",
     },
 
-    # ── Worker Runner / LangGraph (4) ────────────────────────────────────
+    # ── Worker Runner / LangGraph (4) — UNCHANGED from otel_agent/ ───────
     "langgraph.build_duration_avg": {
         "area": "langgraph",
         "title": "Graph build duration (avg)",
-        "query": "sum(langgraph_build_duration_sum) "
-                 "/ clamp_min(sum(langgraph_build_duration_count), 1)",
+        "query": "sum(langgraph_build_duration_seconds_sum) "
+                 "/ clamp_min(sum(langgraph_build_duration_seconds_count), 1)",
     },
     "langgraph.step_rate": {
         "area": "langgraph",
@@ -101,7 +102,7 @@ QUERIES: dict[str, dict[str, str]] = {
         "area": "langgraph",
         "title": "Full graph execution p95",
         "query": "histogram_quantile(0.95, sum by (le) "
-                 "(rate(langgraph_execution_duration_bucket[5m])))",
+                 "(rate(langgraph_execution_duration_seconds_bucket[5m])))",
     },
     "langgraph.step_retries_rate": {
         "area": "langgraph",
@@ -113,20 +114,20 @@ QUERIES: dict[str, dict[str, str]] = {
     "mcp.invocations_rate": {
         "area": "mcp",
         "title": "Tool invocation rate by status",
-        "query": "sum by (tool, tool_server, status) "
-                 "(rate(mcp_tool_invocations_total[5m]))",
+        "query": "sum by (tool, server, status) "
+                 "(rate(wd_otel_tool_invocations_total[5m]))",
     },
     "mcp.duration_p95": {
         "area": "mcp",
         "title": "Tool latency p95",
-        "query": "histogram_quantile(0.95, sum by (le, tool, tool_server) "
-                 "(rate(mcp_tool_duration_bucket[5m])))",
+        "query": "histogram_quantile(0.95, sum by (le, tool, server) "
+                 "(rate(wd_otel_tool_duration_seconds_bucket[5m])))",
     },
     "mcp.timeouts_rate": {
         "area": "mcp",
         "title": "Tool timeouts /min",
-        "query": "sum by (tool, tool_server) "
-                 "(rate(mcp_tool_timeouts_total[5m])) * 60",
+        "query": "sum by (tool, server) "
+                 "(rate(wd_otel_tool_timeouts_total[5m])) * 60",
     },
 }
 
