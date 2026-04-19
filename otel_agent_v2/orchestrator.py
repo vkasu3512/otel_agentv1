@@ -8,8 +8,13 @@ Preconditions (enforced by the caller, not this file):
 Both api.py and cli.py set these up before importing this module.
 
 Exports:
-    orchestrator — a singleton CalculatorOrchestrator instance.
-                   Call `await orchestrator.execute(question)` to run one session.
+    orchestrator     — a singleton CalculatorOrchestrator instance.
+                       Call `await orchestrator.execute(question)` to run one session.
+    add_sub_server   — MCPServerStreamableHttp handle for the add/subtract server
+                       (port 8081). Callers must enter it as an async context
+                       manager before calling orchestrator.execute().
+    mul_div_server   — MCPServerStreamableHttp handle for the multi-step solver
+                       (port 8082). Same async-context-manager contract.
 """
 from __future__ import annotations
 
@@ -20,7 +25,6 @@ from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, handoff
 from agents.mcp import MCPServerStreamableHttp
 
 from wd_otel_orchestrator import TracedOrchestrator
-from wd_otel_orchestrator.base import HandoffReason
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +76,10 @@ solver_agent = Agent(
 )
 
 # ── 4. Orchestrator agent (the entry_agent) ──────────────────────────────────
-# Placeholder handoffs (no input_type/on_handoff yet) — they are replaced below
-# by _build_handoffs() once the orchestrator singleton is created, which wires
-# the on_handoff callbacks AND the HandoffReason input_type together.  The SDK
-# requires both on_handoff and input_type to be supplied together or neither.
+# TracedOrchestrator.execute() wires in on_handoff callbacks that record
+# idle→running transitions automatically via TransitionTracker. The base
+# class handles input_type=HandoffReason internally when _build_handoffs()
+# is called in section 6 below.
 _orchestrator_agent = Agent(
     name="OrchestratorAgent",
     instructions=(
