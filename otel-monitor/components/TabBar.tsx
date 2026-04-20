@@ -2,13 +2,14 @@
 import clsx from 'clsx';
 import { useTelemetry } from '@/lib/store';
 
-export type TabId = 'overview' | 'traces' | 'timeline' | 'mcp' | 'logs' | 'alerts';
+export type TabId = 'overview' | 'traces' | 'timeline' | 'mcp' | 'kpi' | 'logs' | 'alerts';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview',  label: 'Overview'  },
   { id: 'traces',    label: 'Traces'    },
   { id: 'timeline',  label: 'Timeline'  },
   { id: 'mcp',       label: 'MCP Tools' },
+  { id: 'kpi',       label: 'KPIs'      },
   { id: 'logs',      label: 'Logs'      },
   { id: 'alerts',    label: 'Alerts'    },
 ];

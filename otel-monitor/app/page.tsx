@@ -6,6 +6,7 @@ import OverviewPanel from '@/components/panels/OverviewPanel';
 import TracesPanel   from '@/components/panels/TracesPanel';
 import TimelinePanel from '@/components/panels/TimelinePanel';
 import McpPanel      from '@/components/panels/McpPanel';
+import KpiPanel      from '@/components/panels/KpiPanel';
 import LogsPanel     from '@/components/panels/LogsPanel';
 import AlertsPanel   from '@/components/panels/AlertsPanel';
 
@@ -22,6 +23,7 @@ export default function Home() {
         {activeTab === 'traces'    && <TracesPanel   />}
         {activeTab === 'timeline'  && <TimelinePanel />}
         {activeTab === 'mcp'       && <McpPanel      />}
+        {activeTab === 'kpi'       && <KpiPanel      />}
         {activeTab === 'logs'      && <LogsPanel     />}
         {activeTab === 'alerts'    && <AlertsPanel   />}
       </main>
