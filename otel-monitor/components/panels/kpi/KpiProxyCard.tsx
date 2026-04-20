@@ -16,7 +16,7 @@ function formatValue(raw: string): string {
   // Show up to 4 significant digits; strip trailing zeros.
   if (Math.abs(n) >= 1000) return n.toFixed(0);
   if (Math.abs(n) >= 1)    return n.toFixed(2).replace(/\.?0+$/, '');
-  return n.toPrecision(3);
+  return n.toPrecision(3).replace(/\.?0+$/, '');
 }
 
 function isScalarRow(row: KpiProxyResultRow): boolean {

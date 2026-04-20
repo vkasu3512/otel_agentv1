@@ -29,12 +29,12 @@ export default function KpiPanel() {
   const [now, setNow]                 = useState<number>(() => Date.now());
 
   const tick = useCallback(async () => {
-    const { data, error } = await fetchAllKpis();
+    const { data: fetched, error } = await fetchAllKpis();
     if (error) {
       setFetchError(error);
       // Keep last-successful `data` visible.
     } else {
-      setData(data);
+      setData(fetched);
       setFetchError(null);
       setLastFetchedAt(Date.now());
     }
