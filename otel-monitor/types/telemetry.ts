@@ -74,3 +74,29 @@ export interface KpiState {
   latencies:     number[];
   mcpCalls:      Record<string, McpToolStats>;
 }
+
+// ── KPI proxy (snapshot from otel_agent_v2/kpi_proxy.py) ───────────────────
+
+export type KpiProxyArea = 'orchestrator' | 'langgraph' | 'mcp';
+
+export interface KpiProxyResultRow {
+  metric: Record<string, string>;   // e.g. {worker_type: "AddSubAgent"}; {} for scalars
+  value:  [number, string];          // [unix_ts, stringified_float]
+}
+
+export interface KpiProxyEntry {
+  area:    KpiProxyArea;
+  title:   string;
+  query:   string;
+  result?: KpiProxyResultRow[];
+  error?:  string;
+}
+
+/**
+ * Shape returned by /api/kpi. `data` is the raw kpi_proxy response
+ * (keyed by KPI name). `error` is set when the proxy itself is unreachable.
+ */
+export interface KpiProxyResponse {
+  data:  Record<string, KpiProxyEntry> | null;
+  error: string | null;
+}
