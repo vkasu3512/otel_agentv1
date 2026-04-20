@@ -13,7 +13,12 @@
       "Bash(python -m pytest tests/ -v --tb=short)",
       "Bash(pytest tests/ -v --tb=short)",
       "Bash(python -c \"from opentelemetry.sdk.trace.export.in_memory import InMemorySpanExporter; print\\('OK'\\)\")",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(echo \"exit_code=$?\")",
+      "Bash(xargs grep *)",
+      "Bash(python3 -c \"import anyio; import inspect; import anyio._backends._asyncio as ab; src = inspect.getsource\\(ab.TaskGroup.start_soon\\); print\\(src\\)\")",
+      "Bash(python3 *)"
     ]
   }
 }
