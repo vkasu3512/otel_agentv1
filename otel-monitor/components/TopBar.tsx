@@ -21,6 +21,16 @@ export default function TopBar() {
         </span>
       </div>
 
+      {/* Grafana Link */}
+      <a
+        href="/grafana"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-4 px-3 py-1 text-xs font-mono uppercase tracking-wider rounded bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors"
+      >
+        Grafana Style
+      </a>
+
       <div className="h-4 w-px bg-bg-border mx-1" />
 
       {/* Mode toggle */}

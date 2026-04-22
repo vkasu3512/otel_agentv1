@@ -47,6 +47,7 @@ export function genId(): string {
 
 export function createInitialKpi(): KpiState {
   const mcpCalls: Record<string, McpToolStats> = {};
+  // Initialize with mock tools for simulated mode
   MCP_TOOLS.forEach(t => {
     mcpCalls[t] = { calls: 0, errors: 0, totalMs: 0, history: [] };
   });

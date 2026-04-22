@@ -5,7 +5,7 @@ import {
   CategoryScale, LinearScale, Tooltip, Legend,
 } from 'chart.js';
 import { useTelemetry } from '@/lib/store';
-import { MCP_TOOLS, TOOL_COLORS } from '@/lib/telemetry';
+import { REAL_MCP_TOOLS, REAL_TOOL_COLORS } from '@/lib/tempo-mapper';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -20,10 +20,10 @@ export default function McpInvocationChart() {
       type: 'line',
       data: {
         labels: [],
-        datasets: MCP_TOOLS.map(t => ({
+        datasets: REAL_MCP_TOOLS.map(t => ({
           label: t,
           data: [],
-          borderColor: TOOL_COLORS[t],
+          borderColor: REAL_TOOL_COLORS[t],
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           pointRadius: 2,
@@ -62,10 +62,10 @@ export default function McpInvocationChart() {
   useEffect(() => {
     const c = chartRef.current;
     if (!c) return;
-    const maxLen = Math.max(...MCP_TOOLS.map(t => state.kpi.mcpCalls[t].history.length), 0);
+    const maxLen = Math.max(...REAL_MCP_TOOLS.map(t => state.kpi.mcpCalls[t]?.history.length || 0), 0);
     c.data.labels = Array.from({ length: maxLen }, (_, i) => i);
-    MCP_TOOLS.forEach((t, i) => {
-      c.data.datasets[i].data = [...state.kpi.mcpCalls[t].history];
+    REAL_MCP_TOOLS.forEach((t, i) => {
+      c.data.datasets[i].data = [...(state.kpi.mcpCalls[t]?.history || [])];
     });
     c.update('none');
   }, [state.kpi.mcpCalls]);

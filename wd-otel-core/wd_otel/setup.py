@@ -80,7 +80,7 @@ def setup_tracing(cfg: WdOtelConfig) -> TracerProvider:
         }
     )
 
-    otlp_exporter = OTLPSpanExporter(endpoint=cfg.traces_endpoint)
+    otlp_exporter = OTLPSpanExporter(endpoint=cfg.traces_endpoint, insecure=True)
     filtering_exporter = FilteringSpanExporter(
         otlp_exporter,
         filter_libraries=cfg.filter_libraries,

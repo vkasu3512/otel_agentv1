@@ -61,73 +61,89 @@ from fastapi.middleware.cors import CORSMiddleware
 PROM_URL = os.getenv("PROM_URL", "http://localhost:9090").rstrip("/")
 
 QUERIES: dict[str, dict[str, str]] = {
-    # ── DW Orchestrator (4) ──────────────────────────────────────────────
+    # ── Orchestrator Metrics ──────────────────────────────────────
     "orchestrator.active_workers": {
         "area": "orchestrator",
-        "title": "Concurrent active workers",
-        "query": "sum by (worker_type) (wd_otel_workers_active)",
+        "title": "Active workers",
+        "query": "sum(wd_otel_workers_active) or on() vector(0)",
     },
     "orchestrator.state_transitions_rate": {
         "area": "orchestrator",
-        "title": "State transitions /min by worker→to",
-        "query": "sum by (worker_type, from_state, to_state) "
-                 "(rate(wd_otel_state_transitions_total[5m])) * 60",
+        "title": "State transitions (total)",
+        "query": "sum(wd_otel_state_transitions_total) or on() vector(0)",
     },
     "orchestrator.errors_total": {
         "area": "orchestrator",
-        "title": "Orchestration errors (cumulative)",
-        "query": "sum by (worker_type, error_type) "
-                 "(wd_otel_orchestration_errors_total)",
+        "title": "Errors (total)",
+        "query": "sum(wd_otel_errors_total) or on() vector(0)",
     },
     "orchestrator.sync_failures_1h": {
         "area": "orchestrator",
-        "title": "Status sync failures (last 1h)",
-        "query": "sum by (worker_type, failure_type) "
-                 "(increase(wd_otel_sync_failures_total[1h]))",
+        "title": "Sync failures (1h)",
+        "query": "sum(increase(wd_otel_sync_failures_total[1h])) or on() vector(0)",
     },
 
-    # ── Worker Runner / LangGraph (4) — UNCHANGED from otel_agent/ ───────
+    # ── Traces from Store ──────────────────────────────────────
+    "traces.total": {
+        "area": "traces",
+        "title": "Total traces executed",
+        "query": "sum(langgraph_step_total) or on() vector(0)",
+    },
+    "traces.active": {
+        "area": "traces",
+        "title": "Active traces in flight",
+        "query": "sum(langgraph_step_total) or on() vector(0)",
+    },
+
+    # ── LangGraph Metrics ──────────────────────────────────────
     "langgraph.build_duration_avg": {
         "area": "langgraph",
         "title": "Graph build duration (avg)",
         "query": "sum(langgraph_build_duration_seconds_sum) "
                  "/ clamp_min(sum(langgraph_build_duration_seconds_count), 1)",
     },
+    "langgraph.build_duration_count": {
+        "area": "langgraph",
+        "title": "Graph builds (total)",
+        "query": "sum(langgraph_build_duration_seconds_count) or on() vector(0)",
+    },
     "langgraph.step_rate": {
         "area": "langgraph",
-        "title": "Step success/failure rate by node",
-        "query": "sum by (node, status) (rate(langgraph_step_total[5m]))",
+        "title": "Step success rate",
+        "query": "sum(langgraph_step_total) or on() vector(0)",
     },
     "langgraph.execution_duration_p95": {
         "area": "langgraph",
         "title": "Full graph execution p95",
         "query": "histogram_quantile(0.95, sum by (le) "
-                 "(rate(langgraph_execution_duration_seconds_bucket[5m])))",
+                 "(rate(langgraph_execution_duration_seconds_bucket[5m]))) or on() vector(0)",
     },
     "langgraph.step_retries_rate": {
         "area": "langgraph",
-        "title": "Node retries /min",
-        "query": "sum by (node) (rate(langgraph_step_retries_total[5m])) * 60",
+        "title": "Node retries (total)",
+        "query": "sum(langgraph_step_retries_total) or on() vector(0)",
     },
 
-    # ── MCP Tool Server (3) ──────────────────────────────────────────────
-    "mcp.invocations_rate": {
-        "area": "mcp",
-        "title": "Tool invocation rate by status",
-        "query": "sum by (tool, server, status) "
-                 "(rate(wd_otel_tool_invocations_total[5m]))",
+    # ── Python Runtime Metrics ──────────────────────────────────
+    "python.gc_collections": {
+        "area": "runtime",
+        "title": "GC collections (total)",
+        "query": "sum(python_gc_collections_total) or on() vector(0)",
     },
-    "mcp.duration_p95": {
-        "area": "mcp",
-        "title": "Tool latency p95",
-        "query": "histogram_quantile(0.95, sum by (le, tool, server) "
-                 "(rate(wd_otel_tool_duration_seconds_bucket[5m])))",
+    "python.gc_objects": {
+        "area": "runtime",
+        "title": "Objects collected",
+        "query": "sum(python_gc_objects_collected_total) or on() vector(0)",
     },
-    "mcp.timeouts_rate": {
-        "area": "mcp",
-        "title": "Tool timeouts /min",
-        "query": "sum by (tool, server) "
-                 "(rate(wd_otel_tool_timeouts_total[5m])) * 60",
+    "scrape_samples": {
+        "area": "metrics",
+        "title": "Prometheus scrape samples",
+        "query": "sum(scrape_samples_scraped) or on() vector(0)",
+    },
+    "scrape_duration": {
+        "area": "metrics",
+        "title": "Scrape duration (avg ms)",
+        "query": "(sum(scrape_duration_seconds) * 1000) or on() vector(0)",
     },
 }
 

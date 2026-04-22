@@ -1,46 +1,80 @@
 import { NextResponse } from 'next/server';
 
-const GRAFANA_URL = process.env.GRAFANA_URL ?? 'http://localhost:3001';
-const TEMPO_UID   = 'tempo';
+const TEMPO_URL = 'http://localhost:3200';
 
-/* ── Search recent traces ─────────────────────────────────────────────── */
+interface TempoSearchResult {
+  traceID: string;
+  rootServiceName: string;
+  rootTraceName: string;
+  startTimeUnixNano: string;
+  durationMs: number;
+}
+
+interface TempoTraceDetail {
+  traceID: string;
+  startTimeUnixNano: string;
+  durationMs: number;
+  batches: any[];
+}
+
+/**
+ * Fetch trace list from Tempo search API and then fetch full details for each trace.
+ */
+async function fetchTracesFromTempo(): Promise<TempoTraceDetail[]> {
+  try {
+    // 1. Search for traces
+    const searchRes = await fetch(`${TEMPO_URL}/api/search`, { cache: 'no-store' });
+    if (!searchRes.ok) {
+      console.warn(`Tempo search failed: ${searchRes.status}`);
+      return [];
+    }
+
+    const searchData = (await searchRes.json()) as { traces?: TempoSearchResult[] };
+    const traceList = searchData.traces ?? [];
+
+    if (traceList.length === 0) {
+      return [];
+    }
+
+    // 2. Fetch full details for each trace
+    const detailedTraces: TempoTraceDetail[] = [];
+    for (const summary of traceList) {
+      try {
+        const traceRes = await fetch(`${TEMPO_URL}/api/traces/${summary.traceID}`, {
+          cache: 'no-store',
+        });
+        if (traceRes.ok) {
+          const traceDetail = (await traceRes.json()) as any;
+          // Combine summary metadata with detailed trace data
+          detailedTraces.push({
+            traceID: summary.traceID,
+            startTimeUnixNano: summary.startTimeUnixNano,
+            durationMs: summary.durationMs,
+            batches: traceDetail.batches || [],
+          });
+        }
+      } catch (e) {
+        console.warn(`Failed to fetch trace ${summary.traceID}:`, e);
+      }
+    }
+
+    return detailedTraces;
+  } catch (err: unknown) {
+    console.error('Failed to fetch traces from Tempo:', err);
+    return [];
+  }
+}
+
+/**
+ * GET /api/traces — Returns array of traces from Tempo.
+ */
 export async function GET() {
   try {
-    // Fetch trace list from Tempo via Grafana datasource proxy
-    const searchUrl = `${GRAFANA_URL}/api/datasources/proxy/uid/${TEMPO_UID}/api/search?limit=30`;
-    const searchRes = await fetch(searchUrl, { cache: 'no-store' });
-
-    if (!searchRes.ok) {
-      return NextResponse.json(
-        { error: `Tempo search failed: ${searchRes.status}` },
-        { status: searchRes.status },
-      );
-    }
-
-    const { traces: traceList } = await searchRes.json() as {
-      traces: { traceID: string; rootServiceName: string; rootTraceName: string; startTimeUnixNano: string; durationMs: number }[];
-    };
-
-    if (!traceList?.length) {
-      return NextResponse.json({ traces: [] });
-    }
-
-    // Fetch full span details for each trace (parallel, cap at 15)
-    const traceDetails = await Promise.all(
-      traceList.slice(0, 15).map(async (t) => {
-        const url = `${GRAFANA_URL}/api/datasources/proxy/uid/${TEMPO_UID}/api/traces/${t.traceID}`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return { traceID: t.traceID, startTimeUnixNano: t.startTimeUnixNano, durationMs: t.durationMs, batches: data.batches ?? [] };
-      }),
-    );
-
-    return NextResponse.json({
-      traces: traceDetails.filter(Boolean),
-    });
+    const traces = await fetchTracesFromTempo();
+    return NextResponse.json({ traces });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: msg }, { status: 502 });
+    console.error('Traces API error:', msg);
+    return NextResponse.json({ error: msg, traces: [] }, { status: 200 });
   }
 }

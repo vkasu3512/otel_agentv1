@@ -1,23 +1,23 @@
 'use client';
 import { useTelemetry } from '@/lib/store';
-import { MCP_TOOLS, TOOL_COLORS } from '@/lib/telemetry';
 import { Card, SectionHeader } from '@/components/ui/primitives';
 import McpInvocationChart from '@/components/charts/McpInvocationChart';
+import { REAL_MCP_TOOLS, REAL_TOOL_COLORS } from '@/lib/tempo-mapper';
 
 export default function McpPanel() {
   const { state } = useTelemetry();
   const { mcpCalls } = state.kpi;
-  const maxCalls = Math.max(...MCP_TOOLS.map(t => mcpCalls[t].calls), 1);
 
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
       <div className="grid grid-cols-3 gap-3">
-        {MCP_TOOLS.map(tool => {
-          const d = mcpCalls[tool];
+        {REAL_MCP_TOOLS.map(tool => {
+          const d = mcpCalls[tool] || { calls: 0, errors: 0, totalMs: 0 };
           const errPct = d.calls ? ((d.errors / d.calls) * 100).toFixed(0) : '0';
           const avgMs  = d.calls ? Math.round(d.totalMs / d.calls) : 0;
-          const pct    = (d.calls / maxCalls) * 100;
-          const color  = TOOL_COLORS[tool];
+          const realMaxCalls = Math.max(...REAL_MCP_TOOLS.map(t => (mcpCalls[t]?.calls || 0)), 1);
+          const pct    = (d.calls / realMaxCalls) * 100;
+          const color  = REAL_TOOL_COLORS[tool];
 
           return (
             <Card key={tool} className="p-4">

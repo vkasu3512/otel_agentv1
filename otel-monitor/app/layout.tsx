@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { TelemetryProvider } from '@/lib/store';
+import { AlertProvider } from './AlertProvider';
 
 export const metadata: Metadata = {
   title: 'OTel LLM Agent Monitor',
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="scanline grid-bg">
         <TelemetryProvider>
-          {children}
+          <AlertProvider>
+            {children}
+          </AlertProvider>
         </TelemetryProvider>
       </body>
     </html>
